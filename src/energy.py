@@ -31,6 +31,7 @@ when powermetrics is usable.
 """
 import contextlib
 import csv
+import gzip
 import platform
 import time
 from datetime import datetime, timezone
@@ -38,6 +39,7 @@ from pathlib import Path
 
 from codecarbon import OfflineEmissionsTracker
 from codecarbon.core import powermetrics
+from codecarbon.core.powermetrics import ApplePowermetrics
 from codecarbon.core.resource_tracker import ResourceTracker
 
 from src.power_meter import PowerMeter
@@ -45,6 +47,7 @@ from src.power_meter import PowerMeter
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 # Must match the -o path pinned in setup/codecarbon_powermetrics.sudoers
 CC_LOG_DIR = PROJECT_ROOT / "logs" / "codecarbon"
+CC_RAW_DIR = CC_LOG_DIR / "raw"
 POWER_LOG_DIR = PROJECT_ROOT / "logs" / "power"
 RUNS_CSV = PROJECT_ROOT / "logs" / "runs.csv"
 COUNTRY = "TUR"
@@ -63,6 +66,29 @@ def _fast_path_unless_powermetrics(self, model):
 
 
 ResourceTracker._setup_cpu_load_fast = _fast_path_unless_powermetrics
+
+# CodeCarbon overwrites logs/codecarbon/powermetrics_log.txt at every
+# measurement. While a run is active, each fresh copy is appended to
+# logs/codecarbon/raw/<run>_<stamp>.txt.gz (one gzip member per measurement,
+# readable with `gzip -dc` or `zcat`), so the raw CodeCarbon input is kept.
+_raw_archive_path = None
+_original_log_values = ApplePowermetrics._log_values
+
+
+def _log_values_and_archive(self) -> bool:
+    ok = _original_log_values(self)
+    if ok and _raw_archive_path is not None:
+        try:
+            text = Path(self._log_file_path).read_text()
+        except OSError:
+            return ok
+        stamp = datetime.now(timezone.utc).isoformat(timespec="milliseconds")
+        with gzip.open(_raw_archive_path, "at") as f:
+            f.write(f"##### codecarbon powermetrics measurement {stamp}\n{text}\n")
+    return ok
+
+
+ApplePowermetrics._log_values = _log_values_and_archive
 
 
 def start_tracker(run_name: str, save_to_file: bool = True,
@@ -114,8 +140,13 @@ def measure_run(run_name: str, phase: str, model: str, notes: str = "",
     The row is written even if the body raises (status="failed"), because
     failed runs count towards the project footprint.
     """
+    global _raw_archive_path
     m = RunMeasurement()
     start_utc = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    stamp = time.strftime("%Y%m%d-%H%M%S")
+    if save:
+        CC_RAW_DIR.mkdir(parents=True, exist_ok=True)
+        _raw_archive_path = CC_RAW_DIR / f"{run_name}_{stamp}.txt.gz"
     meter = PowerMeter().start()
     tracker = start_tracker(run_name, save_to_file=save)
     status = "ok"
@@ -126,6 +157,7 @@ def measure_run(run_name: str, phase: str, model: str, notes: str = "",
         raise
     finally:
         tracker.stop()
+        _raw_archive_path = None
         res = meter.stop()
         cc = tracker.final_emissions_data
         kwh = lambda j: j / 3.6e6  # noqa: E731
@@ -142,7 +174,6 @@ def measure_run(run_name: str, phase: str, model: str, notes: str = "",
             "notes": notes,
         }
         if save:
-            stamp = time.strftime("%Y%m%d-%H%M%S")
             res.write_csv(POWER_LOG_DIR / f"{run_name}_{stamp}.csv")
             RUNS_CSV.parent.mkdir(parents=True, exist_ok=True)
             new = not RUNS_CSV.exists()

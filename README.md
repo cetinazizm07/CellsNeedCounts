@@ -36,6 +36,7 @@ Two measurements are taken side by side:
 |---|---|---|
 | Primary | `src/power_meter.py`: continuous `powermetrics` (CPU+GPU+ANE), 1 s samples, energy = Σ power × elapsed | `logs/power/<run>_<time>.csv`, `meter_*` columns |
 | Reference | CodeCarbon 3.3.2 `OfflineEmissionsTracker` (required by the handout) | `logs/codecarbon/emissions.csv`, `cc_*` columns |
+| Raw CodeCarbon input | every powermetrics window CodeCarbon read (it overwrites `powermetrics_log.txt` each time) | `logs/codecarbon/raw/<run>_<time>.txt.gz` (`gzip -dc` to read) |
 
 CO2 = kWh × 0.464586 kg/kWh, the Türkiye grid intensity CodeCarbon uses
 (`global_energy_mix.json`, 2023).
