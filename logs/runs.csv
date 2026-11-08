@@ -1,0 +1,3 @@
+run_name,phase,model,status,start_utc,duration_s,meter_cpu_kwh,meter_gpu_kwh,meter_ane_kwh,meter_total_kwh,meter_kg_co2eq,meter_coverage,cc_energy_kwh,cc_kg_co2eq,hardware,notes
+data_prep,preprocess,-,ok,2026-11-08T06:21:05+00:00,28.28,4.346594088611111e-05,1.968226077777778e-06,0.0,4.5434166963888894e-05,2.1108077893085284e-05,0.958,4.46176315143938e-05,2.0728726954746158e-05,Apple M2 / macOS-27.0.1-arm64-arm-64bit,"stain=2 sizes=96x128,192x256"
+baseline_mean_median,eval,baseline,ok,2026-11-08T06:21:41+00:00,3.39,2.232793816666667e-06,2.1241203611111112e-07,0.0,2.4452058527777782e-06,1.136008406318617e-06,0.888,9.11150510183187e-08,4.2330777092396606e-08,Apple M2 / macOS-27.0.1-arm64-arm-64bit,

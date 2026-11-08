@@ -1,0 +1,7 @@
+# Lets CodeCarbon run Apple powermetrics without a password, only with the
+# exact arguments it uses. Install to /etc/sudoers.d/codecarbon_powermetrics.
+# 1) availability check   2) sampling run (log file pinned to this project)
+azizcetin ALL=(root) NOPASSWD: /usr/bin/powermetrics --samplers cpu_power -n 1 -i 1 -o /dev/null
+azizcetin ALL=(root) NOPASSWD: /usr/bin/powermetrics -n 10 --samplers cpu_power --format csv -i 100 -o /Users/azizcetin/Age-Regression/logs/codecarbon/powermetrics_log.txt
+# 3) continuous meter used by src/power_meter.py (output goes to stdout only)
+azizcetin ALL=(root) NOPASSWD: /usr/bin/powermetrics --samplers cpu_power -i 1000

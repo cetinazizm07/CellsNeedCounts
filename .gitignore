@@ -218,3 +218,11 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# --- CSE655 project ---
+# Raw download (1.9 GB) and cached arrays are rebuilt by README steps
+data/raw/
+data/cache/
+# powermetrics scratch file overwritten on every CodeCarbon measurement
+logs/codecarbon/powermetrics_log.txt
+.DS_Store
