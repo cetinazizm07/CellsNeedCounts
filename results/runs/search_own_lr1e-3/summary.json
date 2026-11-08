@@ -1,0 +1,31 @@
+{
+  "run_name": "search_own_lr1e-3",
+  "args": {
+    "model": "own",
+    "pretrained": false,
+    "size": "96x128",
+    "widths": "16,32,64",
+    "pool": "sum",
+    "epochs": 5,
+    "patience": 99,
+    "bs": 64,
+    "lr": 0.001,
+    "wd": 0.0001,
+    "huber_delta": 1.0,
+    "subset": 0.25,
+    "seed": 655,
+    "run_name": "search_own_lr1e-3",
+    "phase": "search",
+    "notes": ""
+  },
+  "params": 97457,
+  "macs": 65482752,
+  "best_val_mae": 2.918040305376053,
+  "best_epoch": 5,
+  "epochs_run": 5,
+  "train_s": 14.171425104141235,
+  "train_kwh": 3.514679888055556e-05,
+  "train_kg_co2eq": 1.6328710704721785e-05,
+  "cc_kwh": 4.334039826758366e-05,
+  "device": "mps"
+}

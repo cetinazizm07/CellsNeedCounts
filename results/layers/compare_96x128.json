@@ -1,0 +1,22 @@
+{
+  "own_sum_w16-32-64_96x128": {
+    "params": 97457,
+    "macs": 65482752
+  },
+  "resnet18": {
+    "params": 11177025,
+    "macs": 444137984
+  },
+  "mobilenet_v3_small": {
+    "params": 1518881,
+    "macs": 14381312
+  },
+  "mobilenet_v3_large": {
+    "params": 4203313,
+    "macs": 54796160
+  },
+  "efficientnet_b0": {
+    "params": 4008829,
+    "macs": 94646656
+  }
+}

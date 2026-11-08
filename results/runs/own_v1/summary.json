@@ -1,0 +1,31 @@
+{
+  "run_name": "own_v1",
+  "args": {
+    "model": "own",
+    "pretrained": false,
+    "size": "96x128",
+    "widths": "16,32,64",
+    "pool": "sum",
+    "epochs": 40,
+    "patience": 6,
+    "bs": 64,
+    "lr": 0.003,
+    "wd": 0.0001,
+    "huber_delta": 1.0,
+    "subset": 1.0,
+    "seed": 655,
+    "run_name": "own_v1",
+    "phase": "train",
+    "notes": ""
+  },
+  "params": 97457,
+  "macs": 65482752,
+  "best_val_mae": 2.06533242125685,
+  "best_epoch": 9,
+  "epochs_run": 15,
+  "train_s": 89.00878500938416,
+  "train_kwh": 0.00021685141095277778,
+  "train_kg_co2eq": 0.00010074612960890721,
+  "cc_kwh": 0.000235023108978937,
+  "device": "mps"
+}

@@ -1,0 +1,17 @@
+layer,type,out_shape,params,rf,jump,macs
+input,-,"(1, 96, 128)",0,1,1,0
+c1.conv,"Conv 3x3 1->16, pad 1","(16, 96, 128)",144,3,1,1769472
+c1.bn+relu,BatchNorm + ReLU,"(16, 96, 128)",32,3,1,0
+p1,MaxPool 2x2 /2,"(16, 48, 64)",0,4,2,0
+c2.conv,"Conv 3x3 16->32, pad 1","(32, 48, 64)",4608,8,2,14155776
+c2.bn+relu,BatchNorm + ReLU,"(32, 48, 64)",64,8,2,0
+p2,MaxPool 2x2 /2,"(32, 24, 32)",0,10,4,0
+c3.conv,"Conv 3x3 32->64, pad 1","(64, 24, 32)",18432,18,4,14155776
+c3.bn+relu,BatchNorm + ReLU,"(64, 24, 32)",128,18,4,0
+c4.conv,"Conv 3x3 64->64, pad 1","(64, 24, 32)",36864,26,4,28311552
+c4.bn+relu,BatchNorm + ReLU,"(64, 24, 32)",128,26,4,0
+p3,MaxPool 2x2 /2,"(64, 12, 16)",0,30,8,0
+c5.conv,"Conv 3x3 64->64, pad 1","(64, 12, 16)",36864,46,8,7077888
+c5.bn+relu,BatchNorm + ReLU,"(64, 12, 16)",128,46,8,0
+head,Conv 1x1 -> 1 + softplus (density),"(1, 12, 16)",65,46,8,12288
+sum,Sum over density map,"(1,)",0,whole image,-,0

@@ -224,3 +224,6 @@ __marimo__/
 data/raw/
 data/cache/
 .DS_Store
+
+# Model checkpoints (final own-CNN weights are copied to weights/)
+checkpoints/
