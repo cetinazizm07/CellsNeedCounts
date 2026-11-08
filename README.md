@@ -97,6 +97,36 @@ RAM power estimate.
 - Caveat: only 24 distinct count values exist and all appear in every split,
   so the test measures accuracy on seen count values, not interpolation.
 
+## External test sets: real microscopy (test only, never used for training or tuning)
+
+| Set | Cells / stain | Size | Images | Count label | Licence | SHA-256 (zip) |
+|---|---|---|---:|---|---|---|
+| [BBBC039](https://bbbc.broadinstitute.org/BBBC039) | human U2OS, Hoechst | 520×696, 12-bit in 16-bit TIFF | 200 | exact, from instance masks | CC0 | images `6f30a5d4…ddd7`, masks `f9e6043d…2710` |
+| [BBBC002](https://bbbc.broadinstitute.org/BBBC002) | Drosophila Kc167, Hoechst | 512×512, 8-bit | 50 | mean of 2 human counters | not stated on page | `19d74948…009f` |
+| [BBBC001](https://bbbc.broadinstitute.org/BBBC001) | human HT29, Hoechst | 512×512, 8-bit | 6 | mean of 2 human counters | CC BY-NC-SA 3.0 | `d6d4ad47…d48` |
+
+Full checksums: `shasum -a 256 data/raw/BBBC0*/*`. Citations: BBBC039v1 Caicedo et al. 2018;
+BBBC001v1 / BBBC002v1 Carpenter et al., Genome Biology 2006; all via Ljosa et al., Nature Methods 2012.
+
+`python -m src.external_data` writes `data/external/{bbbc039,bbbc002,bbbc001}.csv`:
+
+| Set | Count min / median / max | > 100 | Nucleus diameter* | Human counters disagree |
+|---|---|---:|---|---:|
+| BBBC005 (training data) | 1 / 50.5 / 100 | 0 | ~64 px at 696×520 | – |
+| BBBC039 | 0 / 124 / 230 (total 23,556) | 140 of 200 | ~28 px at 696×520 | – |
+| BBBC002 | 8 / 41.5 / 185 | some | ~19 px at 512×512 | 19.7 % |
+| BBBC001 | 249 / 347.5 / 465.5 | all | ~11 px at 512×512 | 9.8 % |
+
+\* Median area of Otsu-thresholded components (BBBC039: mask components), as an
+equivalent-circle diameter. BBBC039 mask decoding: red channel = label 1..k,
+touching nuclei get different labels, so nucleus = connected component (8-conn.)
+of one label; components < 10 px are dropped (23,615 → 23,556).
+
+Consequences for testing: the real nuclei are 2–6× smaller in pixels than the
+synthetic ones, and most real images hold more than 100 nuclei. Images must be
+rescaled so nuclei have the training size (~11 px at the model input), and
+counts above 100 test extrapolation.
+
 ## Reproducing results
 
 ```bash
