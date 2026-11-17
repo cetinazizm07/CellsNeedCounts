@@ -1,6 +1,6 @@
 #!/bin/bash
-cd /Users/azizcetin/Age-Regression
-P=/opt/anaconda3/envs/cse655/bin/python
+cd "$(dirname "$0")/.."
+P=${PYTHON:-python}
 L=logs/stdout; mkdir -p "$L"
 B=(-m src.train --model own --lr 3e-3 --epochs 15 --patience 15 --phase ablation)
 run() { name=$1; shift; "$P" "${B[@]}" "$@" --run-name "$name" > "$L/$name.log" 2>&1; echo "$name exit $?"; }

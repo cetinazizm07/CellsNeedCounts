@@ -175,7 +175,7 @@ mnv3s_scratch), all LR scans. Project total so far: 30 runs, 4.199 Wh,
 ### Test evaluation (each final model once)
 
 ```bash
-for r in own_e15 resnet18_ft_e15 mnv3s_ft_e15 mnv3s_scratch_e15 resnet18_probe_e15; do python -m src.evaluate --run $r; done
+for r in own_e15 resnet18_ft_e15 mnv3s_ft_e15 mnv3s_scratch_e15 resnet18_probe_e15 own_green_48x64; do python -m src.evaluate --run $r; done
 python -m src.results   # -> results/results.csv, results/acceptability.json
 python -m src.plot      # -> results/error_vs_co2.{png,pdf}
 ```
@@ -187,18 +187,35 @@ validation MAE exactly (a few seconds of GPU time, not metered).
 | Model | Params | MFLOPs/img | Test MAE | RMSE | R² | Train Wh | Train g CO2eq | Project Wh | Project g CO2eq | ms/img (bs 1) | MB | Wh / 1000 pred |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | Mean baseline | 0 | 0 | 25.833 | 29.773 | 0.000 | – | – | – | – | – | – | – |
-| **Own CNN** | 97,457 | 131.0 | **1.458** | 1.855 | 0.9961 | **0.242** | 0.112 | **0.594** | 0.276 | **1.12** | **0.40** | 0.0006 |
+| **Own CNN final** (8-16-32, no c5, fp16, 48×64) | 15,257 | 7.5 | 1.704 | 2.110 | 0.9950 | **0.027** | **0.013** | 1.994 | 0.926 | **0.85** | **0.07** | **0.0001** |
+| Own CNN reference (16-32-64, 96×128) | 97,457 | 131.0 | **1.458** | 1.855 | 0.9961 | 0.242 | 0.112 | (in row above) | | 1.12 | 0.40 | 0.0006 |
 | MobileNetV3-S (ImageNet FT) | 1,518,881 | 28.8 | 1.499 | 1.943 | 0.9957 | 0.263 | 0.122 | 1.014 | 0.471 | 5.62 | 6.21 | 0.0005 |
 | ResNet-18 (ImageNet FT) | 11,177,025 | 888.3 | 1.548 | 1.941 | 0.9958 | 0.762 | 0.354 | 1.755 | 0.815 | 4.86 | 44.79 | 0.0018 |
 | MobileNetV3-S (scratch) | 1,518,881 | 28.8 | 1.608 | 2.102 | 0.9950 | 0.311 | 0.144 | 0.963 | 0.448 | 6.06 | 6.21 | 0.0006 |
 | ResNet-18 (ImageNet, frozen backbone) | 11,177,025 | 888.3 | 3.861 | 4.965 | 0.9722 | 0.056 | 0.026 | 0.122 | 0.057 | 4.82 | 44.79 | 0.0018 |
 
 "Project" = every run of that model family in `logs/runs.csv` (LR scans,
-discarded configurations, final run, test evaluation, inference benchmark).
+discarded configurations, ablations, seed repeats, final run, test
+evaluation, inference benchmark). All own-CNN runs (23) are counted once, in
+the final row.
+
+**Choosing the final own model.** After the ablations, two combined "green"
+configurations (half width + no c5 + fp16) were trained (`setup/run_green.sh`):
+96×128 → val MAE 1.306, 0.099 Wh; 48×64 → val MAE 1.617, 0.027 Wh. The rule
+was fixed before training them: take the lowest-energy configuration with val
+MAE ≤ 1.15 × best standard val MAE (1.631) − 2 seed SDs = 1.74. Both passed,
+so 48×64 was chosen and tested once.
 
 **Acceptability (§3.5):** MAE_best = 1.499 (MobileNetV3-S FT), so the own model
-must reach ≤ 1.15 × 1.499 = 1.724 and ≤ 0.6 × 25.833 = 15.50. Own CNN test MAE
-1.458 → **acceptable**, with the lowest project footprint of all acceptable models.
+must reach ≤ 1.15 × 1.499 = 1.724 and ≤ 0.6 × 25.833 = 15.50.
+- Final own CNN: test MAE 1.704 → **acceptable, but with a margin of only
+  0.021**, which is smaller than the seed SD (0.067); the acceptance is not robust.
+- Reference own CNN: test MAE 1.458 → acceptable with a margin of 0.27.
+- Footprint: the final model's training run uses 9× less energy than the
+  reference and 10–28× less than the standard models, and its inference uses
+  the least energy per 1,000 predictions. Over the **whole project**, however,
+  the own-CNN family (1.99 Wh, mostly ablations and seed repeats) costs more
+  than MobileNetV3-S FT (1.01 Wh), which had no ablations.
 
 ![error vs CO2](results/error_vs_co2.png)
 

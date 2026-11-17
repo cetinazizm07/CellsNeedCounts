@@ -19,9 +19,12 @@ ROOT = Path(__file__).resolve().parent.parent
 RUNS = pd.read_csv(ROOT / "logs" / "runs.csv")
 OUT = ROOT / "results"
 
-# label, final run, regex for every run of the family
+# label, final run, regex for every run of the family (None: a tested extra
+# configuration whose runs are already counted in another row's family)
+FINAL_OWN = "own_green_48x64"
 MODELS = [
-    ("Own CNN (scratch)", "own_e15", r"^(?:search_)?own_|^(?:eval|infer)_own_"),
+    ("Own CNN final (8-16-32, no c5, fp16, 48x64)", FINAL_OWN, r"^(?:search_)?own_|^(?:eval|infer)_own_"),
+    ("Own CNN reference (16-32-64, 96x128)", "own_e15", None),
     ("MobileNetV3-S (ImageNet FT)", "mnv3s_ft_e15", r"^(?:search_)?mnv3s_ft|^(?:eval|infer)_mnv3s_ft"),
     ("ResNet-18 (ImageNet FT)", "resnet18_ft_e15", r"^(?:search_)?resnet18_ft|^(?:eval|infer)_resnet18_ft"),
     ("MobileNetV3-S (scratch)", "mnv3s_scratch_e15", r"^(?:search_)?mnv3s_scratch|^(?:eval|infer)_mnv3s_scratch"),
@@ -45,20 +48,22 @@ def main():
     claimed = set()
     for label, run, regex in MODELS:
         t = json.loads((OUT / "test" / f"{run}.json").read_text())
-        fam = family(regex)
-        claimed |= set(fam.run_name)
+        fam = family(regex) if regex else None
+        if fam is not None:
+            claimed |= set(fam.run_name)
         final = RUNS[RUNS.run_name == run].iloc[-1]
         rows.append({
             "model": label, "run": run, "params": t["params"],
             "mflops_per_img": 2 * t["macs"] / 1e6,
             "test_mae": t["test"]["mae"], "test_rmse": t["test"]["rmse"], "test_r2": t["test"]["r2"],
             "train_kwh": final.meter_total_kwh, "train_kg_co2eq": final.meter_kg_co2eq,
-            "project_kwh": fam.meter_total_kwh.sum(), "project_kg_co2eq": fam.meter_kg_co2eq.sum(),
-            "n_runs": len(fam), "ms_per_img": t["latency_ms_bs1"], "file_mb": t["file_mb"],
+            "project_kwh": fam.meter_total_kwh.sum() if fam is not None else None,
+            "project_kg_co2eq": fam.meter_kg_co2eq.sum() if fam is not None else None,
+            "n_runs": len(fam) if fam is not None else None, "ms_per_img": t["latency_ms_bs1"], "file_mb": t["file_mb"],
             "wh_per_1000_pred": t["inference_kwh_per_1000"] * 1000,
         })
     shared = family(SHARED)
-    fams = [set(family(rx).run_name) for _, _, rx in MODELS] + [set(shared.run_name)]
+    fams = [set(family(rx).run_name) for _, _, rx in MODELS if rx] + [set(shared.run_name)]
     assert sum(len(f) for f in fams) == len(set().union(*fams)), "a run is in two families"
     claimed |= set(shared.run_name)
     unclaimed = sorted(set(RUNS.run_name) - claimed)
@@ -66,16 +71,20 @@ def main():
 
     df = pd.DataFrame(rows)
     OUT.mkdir(exist_ok=True)
-    df.to_csv(OUT / "results.csv", index=False)
 
     best_std = df[df.model.str.contains("ResNet|MobileNet")].test_mae.min()
     thr = min(1.15 * best_std, 0.6 * base["test"]["mae"])
     # The criterion is defined for the own model only (handout §3.5).
     df["acceptable"] = None
-    df.loc[df.run == "own_e15", "acceptable"] = bool(df.loc[df.run == "own_e15", "test_mae"].iloc[0] <= thr)
+    own = df.run.str.startswith("own_")
+    df.loc[own, "acceptable"] = df.loc[own, "test_mae"] <= thr
+    df.to_csv(OUT / "results.csv", index=False)
     summary = {"mae_best_standard": best_std, "threshold_1.15x_best": 1.15 * best_std,
                "threshold_0.6x_mean": 0.6 * base["test"]["mae"],
-               "own_acceptable": bool(df.loc[df.run == "own_e15", "acceptable"].iloc[0]),
+               "final_own_run": FINAL_OWN,
+               "own_acceptable": bool(df.loc[df.run == FINAL_OWN, "acceptable"].iloc[0]),
+               "own_margin_to_threshold": float(thr - df.loc[df.run == FINAL_OWN, "test_mae"].iloc[0]),
+               "own_reference_acceptable": bool(df.loc[df.run == "own_e15", "acceptable"].iloc[0]),
                "shared_kwh": shared.meter_total_kwh.sum(),
                "project_total_kwh": RUNS.meter_total_kwh.sum(),
                "project_total_kg_co2eq": RUNS.meter_kg_co2eq.sum(),

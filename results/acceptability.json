@@ -2,9 +2,12 @@
   "mae_best_standard": 1.4994319478670757,
   "threshold_1.15x_best": 1.7243467400471368,
   "threshold_0.6x_mean": 15.499999999999998,
+  "final_own_run": "own_green_48x64",
   "own_acceptable": true,
+  "own_margin_to_threshold": 0.02053952965264516,
+  "own_reference_acceptable": true,
   "shared_kwh": 4.787937281666667e-05,
-  "project_total_kwh": 0.005722035502619444,
-  "project_total_kg_co2eq": 0.0026583775860199573,
-  "n_runs_total": 52
+  "project_total_kwh": 0.005895313689791667,
+  "project_total_kg_co2eq": 0.002738880205885551,
+  "n_runs_total": 56
 }
