@@ -172,4 +172,34 @@ cosine with early stopping and no precise BN (own_v1, resnet18_ft, mnv3s_ft,
 mnv3s_scratch), all LR scans. Project total so far: 30 runs, 4.199 Wh,
 1.95 g CO2eq.
 
-To be filled in: test evaluation, `results.csv`, error–CO2 plot, ablations.
+### Test evaluation (each final model once)
+
+```bash
+for r in own_e15 resnet18_ft_e15 mnv3s_ft_e15 mnv3s_scratch_e15 resnet18_probe_e15; do python -m src.evaluate --run $r; done
+python -m src.results   # -> results/results.csv, results/acceptability.json
+python -m src.plot      # -> results/error_vs_co2.{png,pdf}
+```
+
+`src/evaluate.py` refuses to run twice on the same run (test used once).
+Before it, the five checkpoints were reloaded and checked to reproduce their
+validation MAE exactly (a few seconds of GPU time, not metered).
+
+| Model | Params | MFLOPs/img | Test MAE | RMSE | R² | Train Wh | Train g CO2eq | Project Wh | Project g CO2eq | ms/img (bs 1) | MB | Wh / 1000 pred |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Mean baseline | 0 | 0 | 25.833 | 29.773 | 0.000 | – | – | – | – | – | – | – |
+| **Own CNN** | 97,457 | 131.0 | **1.458** | 1.855 | 0.9961 | **0.242** | 0.112 | **0.594** | 0.276 | **1.12** | **0.40** | 0.0006 |
+| MobileNetV3-S (ImageNet FT) | 1,518,881 | 28.8 | 1.499 | 1.943 | 0.9957 | 0.263 | 0.122 | 1.014 | 0.471 | 5.62 | 6.21 | 0.0005 |
+| ResNet-18 (ImageNet FT) | 11,177,025 | 888.3 | 1.548 | 1.941 | 0.9958 | 0.762 | 0.354 | 1.755 | 0.815 | 4.86 | 44.79 | 0.0018 |
+| MobileNetV3-S (scratch) | 1,518,881 | 28.8 | 1.608 | 2.102 | 0.9950 | 0.311 | 0.144 | 0.963 | 0.448 | 6.06 | 6.21 | 0.0006 |
+| ResNet-18 (ImageNet, frozen backbone) | 11,177,025 | 888.3 | 3.861 | 4.965 | 0.9722 | 0.056 | 0.026 | 0.122 | 0.057 | 4.82 | 44.79 | 0.0018 |
+
+"Project" = every run of that model family in `logs/runs.csv` (LR scans,
+discarded configurations, final run, test evaluation, inference benchmark).
+
+**Acceptability (§3.5):** MAE_best = 1.499 (MobileNetV3-S FT), so the own model
+must reach ≤ 1.15 × 1.499 = 1.724 and ≤ 0.6 × 25.833 = 15.50. Own CNN test MAE
+1.458 → **acceptable**, with the lowest project footprint of all acceptable models.
+
+![error vs CO2](results/error_vs_co2.png)
+
+To be filled in: ablations, seed variance, external real-microscopy test.

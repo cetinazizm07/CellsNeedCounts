@@ -1,0 +1,10 @@
+{
+  "mae_best_standard": 1.4994319478670757,
+  "threshold_1.15x_best": 1.7243467400471368,
+  "threshold_0.6x_mean": 15.499999999999998,
+  "own_acceptable": true,
+  "shared_kwh": 4.787937281666667e-05,
+  "project_total_kwh": 0.004495729442641667,
+  "project_total_kg_co2eq": 0.0020886529588391213,
+  "n_runs_total": 40
+}
