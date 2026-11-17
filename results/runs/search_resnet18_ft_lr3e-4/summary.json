@@ -1,0 +1,31 @@
+{
+  "run_name": "search_resnet18_ft_lr3e-4",
+  "args": {
+    "model": "resnet18",
+    "pretrained": true,
+    "size": "96x128",
+    "widths": "16,32,64",
+    "pool": "sum",
+    "epochs": 5,
+    "patience": 99,
+    "bs": 64,
+    "lr": 0.0003,
+    "wd": 0.0001,
+    "huber_delta": 1.0,
+    "subset": 0.25,
+    "seed": 655,
+    "run_name": "search_resnet18_ft_lr3e-4",
+    "phase": "search",
+    "notes": ""
+  },
+  "params": 11177025,
+  "macs": 444137984,
+  "best_val_mae": 13.36039481436213,
+  "best_epoch": 4,
+  "epochs_run": 5,
+  "train_s": 31.29982614517212,
+  "train_kwh": 9.117446575833333e-05,
+  "train_kg_co2eq": 4.235838034880105e-05,
+  "cc_kwh": 0.0001070100999326471,
+  "device": "mps"
+}

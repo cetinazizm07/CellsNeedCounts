@@ -1,0 +1,31 @@
+{
+  "run_name": "search_mnv3s_ft_lr1e-3",
+  "args": {
+    "model": "mobilenet_v3_small",
+    "pretrained": true,
+    "size": "96x128",
+    "widths": "16,32,64",
+    "pool": "sum",
+    "epochs": 5,
+    "patience": 99,
+    "bs": 64,
+    "lr": 0.001,
+    "wd": 0.0001,
+    "huber_delta": 1.0,
+    "subset": 0.25,
+    "seed": 655,
+    "run_name": "search_mnv3s_ft_lr1e-3",
+    "phase": "search",
+    "notes": ""
+  },
+  "params": 1518881,
+  "macs": 14381312,
+  "best_val_mae": 5.187716246893008,
+  "best_epoch": 3,
+  "epochs_run": 5,
+  "train_s": 18.728731155395508,
+  "train_kwh": 5.0956070700000004e-05,
+  "train_kg_co2eq": 2.3673477062230203e-05,
+  "cc_kwh": 4.8823623456381116e-05,
+  "device": "mps"
+}

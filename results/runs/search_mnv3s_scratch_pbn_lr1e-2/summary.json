@@ -1,0 +1,32 @@
+{
+  "run_name": "search_mnv3s_scratch_pbn_lr1e-2",
+  "args": {
+    "model": "mobilenet_v3_small",
+    "pretrained": false,
+    "size": "96x128",
+    "widths": "16,32,64",
+    "pool": "sum",
+    "epochs": 5,
+    "patience": 99,
+    "bs": 64,
+    "lr": 0.01,
+    "wd": 0.0001,
+    "huber_delta": 1.0,
+    "subset": 0.25,
+    "bn_batches": 20,
+    "seed": 655,
+    "run_name": "search_mnv3s_scratch_pbn_lr1e-2",
+    "phase": "search",
+    "notes": ""
+  },
+  "params": 1518881,
+  "macs": 14381312,
+  "best_val_mae": 2.4575451922913394,
+  "best_epoch": 5,
+  "epochs_run": 5,
+  "train_s": 25.75484609603882,
+  "train_kwh": 5.741522167222222e-05,
+  "train_kg_co2eq": 2.6674308175811034e-05,
+  "cc_kwh": 4.395190891145218e-05,
+  "device": "mps"
+}

@@ -14,6 +14,9 @@ Design:
 - Optimiser: AdamW, cosine decay with linear warm-up (1 epoch), per step.
 - Stopping: keep the checkpoint with the best validation MAE; stop when it has
   not improved for `--patience` epochs, or at `--epochs`.
+- Validation: BatchNorm statistics are re-estimated on 20 training batches
+  before every validation ("precise BN", `--bn-batches`), for every model.
+  Runs before 2026-11-17 (own_v1 and the first LR scans) did not do this.
 
 Usage examples:
   python -m src.train --model own --run-name own_v1
@@ -72,6 +75,31 @@ def augment(x):
 
 
 @torch.no_grad()
+def recompute_bn_stats(model, x_u8, n_batches, bs):
+    """Precise BN: reset BatchNorm running stats and re-estimate them on training
+    batches with the current weights (cumulative average, momentum=None).
+
+    Needed because torchvision's MobileNetV3 uses BN momentum 0.01, so its
+    running stats lag far behind the weights early in training; without this,
+    the scratch model predicted a constant in eval mode. Applied to every model
+    before every validation, so evaluation is identical for all of them.
+    """
+    bns = [m for m in model.modules() if isinstance(m, torch.nn.modules.batchnorm._BatchNorm)]
+    if not bns or n_batches <= 0:
+        return
+    saved = [m.momentum for m in bns]
+    for m in bns:
+        m.reset_running_stats()
+        m.momentum = None
+    model.train()
+    idx = torch.randperm(x_u8.shape[0], device=x_u8.device)[:n_batches * bs]
+    for i in range(0, idx.numel(), bs):
+        model(x_u8[idx[i:i + bs]].float() / 255.0)
+    for m, mom in zip(bns, saved):
+        m.momentum = mom
+
+
+@torch.no_grad()
 def predict(model, x_u8, bs=256):
     model.eval()
     out = []
@@ -94,6 +122,8 @@ def main():
     ap.add_argument("--wd", type=float, default=1e-4)
     ap.add_argument("--huber-delta", type=float, default=1.0)
     ap.add_argument("--subset", type=float, default=1.0, help="fraction of train layouts")
+    ap.add_argument("--bn-batches", type=int, default=20,
+                    help="train batches for precise-BN re-estimation before each validation (0 = off)")
     ap.add_argument("--seed", type=int, default=655)
     ap.add_argument("--run-name", required=True)
     ap.add_argument("--phase", default="train", help="train | search | ablation")
@@ -148,6 +178,7 @@ def main():
                 sched.step()
                 loss_sum += loss.item() * b.numel()
                 n += b.numel()
+            recompute_bn_stats(model, xtr, args.bn_batches, args.bs)
             pva = predict(model, xva)
             val = regression_metrics(yva.cpu().numpy(), pva.cpu().numpy())
             row = {"epoch": epoch, "train_loss": loss_sum / n, "val_mae": val["mae"],
