@@ -1,0 +1,32 @@
+{
+  "run_name": "mnv3s_ft_e15",
+  "args": {
+    "model": "mobilenet_v3_small",
+    "pretrained": true,
+    "size": "96x128",
+    "widths": "16,32,64",
+    "pool": "sum",
+    "epochs": 15,
+    "patience": 15,
+    "bs": 64,
+    "lr": 0.003,
+    "wd": 0.0001,
+    "huber_delta": 1.0,
+    "subset": 1.0,
+    "bn_batches": 20,
+    "seed": 655,
+    "run_name": "mnv3s_ft_e15",
+    "phase": "train",
+    "notes": ""
+  },
+  "params": 1518881,
+  "macs": 14381312,
+  "best_val_mae": 1.8190941624343395,
+  "best_epoch": 15,
+  "epochs_run": 15,
+  "train_s": 181.4023449420929,
+  "train_kwh": 0.00026278139215277755,
+  "train_kg_co2eq": 0.00012208455585469033,
+  "cc_kwh": 0.0003740138258447812,
+  "device": "mps"
+}

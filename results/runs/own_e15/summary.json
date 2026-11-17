@@ -1,0 +1,32 @@
+{
+  "run_name": "own_e15",
+  "args": {
+    "model": "own",
+    "pretrained": false,
+    "size": "96x128",
+    "widths": "16,32,64",
+    "pool": "sum",
+    "epochs": 15,
+    "patience": 15,
+    "bs": 64,
+    "lr": 0.003,
+    "wd": 0.0001,
+    "huber_delta": 1.0,
+    "subset": 1.0,
+    "bn_batches": 20,
+    "seed": 655,
+    "run_name": "own_e15",
+    "phase": "train",
+    "notes": ""
+  },
+  "params": 97457,
+  "macs": 65482752,
+  "best_val_mae": 1.2586686393866937,
+  "best_epoch": 14,
+  "epochs_run": 15,
+  "train_s": 103.37345218658447,
+  "train_kwh": 0.0002416679754777777,
+  "train_kg_co2eq": 0.00011227555805531883,
+  "cc_kwh": 0.00026418621872128,
+  "device": "mps"
+}

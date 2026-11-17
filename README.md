@@ -144,4 +144,32 @@ python -m src.baseline     # -> results/baseline.json
 Acceptability thresholds (handout §3.5): MAE_own ≤ 0.6 × 25.833 = **15.50**,
 and MAE_own ≤ 1.15 × MAE_best (best standard model, still to be trained).
 
-To be filled in: training commands per model, evaluation, `results.csv`, error–CO2 plot.
+### Training (validation results; test not yet used)
+
+Common protocol (`src/train.py`): 96×128 input, flips, Huber δ=1, AdamW
+(wd 1e-4), batch 64, 1-epoch warm-up + cosine to 0 over **15 epochs**, precise
+BN (20 batches) before each validation, best-val-MAE checkpoint. LR per model
+from a 25 %-subset, 5-epoch scan (best val MAE).
+
+```bash
+python -m src.train --model own --lr 3e-3 --epochs 15 --patience 15 --run-name own_e15
+python -m src.train --model resnet18 --pretrained --lr 1e-3 --epochs 15 --patience 15 --run-name resnet18_ft_e15
+python -m src.train --model mobilenet_v3_small --pretrained --lr 3e-3 --epochs 15 --patience 15 --run-name mnv3s_ft_e15
+python -m src.train --model mobilenet_v3_small --lr 1e-2 --epochs 15 --patience 15 --run-name mnv3s_scratch_e15
+python -m src.train_probe --model resnet18 --epochs 15 --run-name resnet18_probe_e15   # frozen backbone
+```
+
+| Run | Init | Trainable params | MACs | Best val MAE (epoch) | Train time | Train Wh |
+|---|---|---:|---:|---:|---:|---:|
+| own_e15 | scratch | 97,457 | 65.5 M | **1.259** (14) | 103 s | 0.242 |
+| mnv3s_scratch_e15 | scratch | 1,518,881 | 14.4 M | 1.631 (11) | 181 s | 0.311 |
+| resnet18_ft_e15 | ImageNet, full FT | 11,177,025 | 444.1 M | 1.672 (3) | 288 s | 0.762 |
+| mnv3s_ft_e15 | ImageNet, full FT | 1,518,881 | 14.4 M | 1.819 (15) | 181 s | 0.263 |
+| resnet18_probe_e15 | ImageNet, frozen backbone | 513 | 444.1 M | 3.587 (12) | 22 s | 0.056 |
+
+Earlier configurations kept in the footprint (`logs/runs.csv`): 40-epoch
+cosine with early stopping and no precise BN (own_v1, resnet18_ft, mnv3s_ft,
+mnv3s_scratch), all LR scans. Project total so far: 30 runs, 4.199 Wh,
+1.95 g CO2eq.
+
+To be filled in: test evaluation, `results.csv`, error–CO2 plot, ablations.
