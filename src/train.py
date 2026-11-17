@@ -115,6 +115,8 @@ def main():
     ap.add_argument("--size", default="96x128")
     ap.add_argument("--widths", default="16,32,64", help="own CNN only")
     ap.add_argument("--pool", default="sum", help="own CNN only: sum | avg")
+    ap.add_argument("--no-c5", action="store_true", help="own CNN only: drop the last conv (RF ablation)")
+    ap.add_argument("--amp", action="store_true", help="float16 autocast for training steps")
     ap.add_argument("--epochs", type=int, default=40)
     ap.add_argument("--patience", type=int, default=6)
     ap.add_argument("--bs", type=int, default=64)
@@ -150,6 +152,8 @@ def main():
             xf = xtr.float() / 255.0
             kw = dict(widths=tuple(int(v) for v in args.widths.split(",")), pool=args.pool,
                       pixel_mean=xf.mean().item(), pixel_std=xf.std().item())
+            if args.no_c5:
+                kw["c5"] = False
             del xf
         model = build_model(args.model, in_hw, pretrained=args.pretrained, **kw)
         n_params = count_params(model)
@@ -157,6 +161,7 @@ def main():
         model = model.to(dev)
 
         opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.wd)
+        scaler = torch.amp.GradScaler(dev.type, enabled=args.amp)
         steps_per_epoch = math.ceil(xtr.shape[0] / args.bs)
         total, warm = args.epochs * steps_per_epoch, steps_per_epoch
         sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda s: (s + 1) / warm if s < warm
@@ -171,10 +176,13 @@ def main():
             for i in range(0, xtr.shape[0], args.bs):
                 b = perm[i:i + args.bs]
                 x = augment(xtr[b]).float() / 255.0
-                loss = F.huber_loss(model(x), ytr[b], delta=args.huber_delta)
+                with torch.autocast(dev.type, dtype=torch.float16, enabled=args.amp):
+                    pred = model(x)
+                loss = F.huber_loss(pred.float(), ytr[b], delta=args.huber_delta)
                 opt.zero_grad(set_to_none=True)
-                loss.backward()
-                opt.step()
+                scaler.scale(loss).backward()
+                scaler.step(opt)
+                scaler.update()
                 sched.step()
                 loss_sum += loss.item() * b.numel()
                 n += b.numel()

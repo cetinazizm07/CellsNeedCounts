@@ -33,17 +33,19 @@ class OwnCountCNN(nn.Module):
     (that alternative is kept as `pool="avg"` for the ablation).
 
     widths: channels of c1..c5 (c4 and c5 share the last width).
+    c5: keep the last 3x3 conv (False is the receptive-field ablation:
+        RF 46 -> 30 px at the input).
     """
 
     def __init__(self, in_hw=(96, 128), widths=(16, 32, 64), pool="sum",
-                 pixel_mean=0.0, pixel_std=1.0):
+                 pixel_mean=0.0, pixel_std=1.0, c5=True):
         super().__init__()
         # Train-split pixel statistics; buffers so they are saved with the weights.
         self.register_buffer("pixel_mean", torch.tensor(float(pixel_mean)))
         self.register_buffer("pixel_std", torch.tensor(float(pixel_std)))
         w1, w2, w3 = widths
         self.pool = pool
-        self.features = nn.Sequential(
+        layers = [
             conv_bn_relu(1, w1),    # c1  H   x W
             nn.MaxPool2d(2),        # p1  H/2 x W/2
             conv_bn_relu(w1, w2),   # c2
@@ -51,8 +53,10 @@ class OwnCountCNN(nn.Module):
             conv_bn_relu(w2, w3),   # c3
             conv_bn_relu(w3, w3),   # c4
             nn.MaxPool2d(2),        # p3  H/8 x W/8
-            conv_bn_relu(w3, w3),   # c5
-        )
+        ]
+        if c5:
+            layers.append(conv_bn_relu(w3, w3))  # c5
+        self.features = nn.Sequential(*layers)
         n_pos = (in_hw[0] // 8) * (in_hw[1] // 8)
         if pool == "sum":
             self.head = nn.Conv2d(w3, 1, 1)

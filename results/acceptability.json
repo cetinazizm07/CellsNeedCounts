@@ -4,7 +4,7 @@
   "threshold_0.6x_mean": 15.499999999999998,
   "own_acceptable": true,
   "shared_kwh": 4.787937281666667e-05,
-  "project_total_kwh": 0.004495729442641667,
-  "project_total_kg_co2eq": 0.0020886529588391213,
-  "n_runs_total": 40
+  "project_total_kwh": 0.005722035502619444,
+  "project_total_kg_co2eq": 0.0026583775860199573,
+  "n_runs_total": 52
 }
