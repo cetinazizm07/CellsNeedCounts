@@ -187,16 +187,16 @@ validation MAE exactly (a few seconds of GPU time, not metered).
 | Model | Params | MFLOPs/img | Test MAE | RMSE | R² | Train Wh | Train g CO2eq | Project Wh | Project g CO2eq | ms/img (bs 1) | MB | Wh / 1000 pred |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | Mean baseline | 0 | 0 | 25.833 | 29.773 | 0.000 | – | – | – | – | – | – | – |
-| **Own CNN final** (8-16-32, no c5, fp16, 48×64) | 15,257 | 7.5 | 1.704 | 2.110 | 0.9950 | **0.027** | **0.013** | 1.994 | 0.926 | **0.85** | **0.07** | **0.0001** |
+| **Own CNN final** (8-16-32, no c5, fp16, 48×64) | 15,257 | 7.5 | 1.704 | 2.110 | 0.9950 | **0.027** | **0.013** | 2.032 | 0.944 | **0.85** | **0.07** | **0.0001** |
 | Own CNN reference (16-32-64, 96×128) | 97,457 | 131.0 | **1.458** | 1.855 | 0.9961 | 0.242 | 0.112 | (in row above) | | 1.12 | 0.40 | 0.0006 |
-| MobileNetV3-S (ImageNet FT) | 1,518,881 | 28.8 | 1.499 | 1.943 | 0.9957 | 0.263 | 0.122 | 1.014 | 0.471 | 5.62 | 6.21 | 0.0005 |
-| ResNet-18 (ImageNet FT) | 11,177,025 | 888.3 | 1.548 | 1.941 | 0.9958 | 0.762 | 0.354 | 1.755 | 0.815 | 4.86 | 44.79 | 0.0018 |
-| MobileNetV3-S (scratch) | 1,518,881 | 28.8 | 1.608 | 2.102 | 0.9950 | 0.311 | 0.144 | 0.963 | 0.448 | 6.06 | 6.21 | 0.0006 |
-| ResNet-18 (ImageNet, frozen backbone) | 11,177,025 | 888.3 | 3.861 | 4.965 | 0.9722 | 0.056 | 0.026 | 0.122 | 0.057 | 4.82 | 44.79 | 0.0018 |
+| MobileNetV3-S (ImageNet FT) | 1,518,881 | 28.8 | 1.499 | 1.943 | 0.9957 | 0.263 | 0.122 | 1.033 | 0.480 | 5.62 | 6.21 | 0.0005 |
+| ResNet-18 (ImageNet FT) | 11,177,025 | 888.3 | 1.548 | 1.941 | 0.9958 | 0.762 | 0.354 | 1.791 | 0.832 | 4.86 | 44.79 | 0.0018 |
+| MobileNetV3-S (scratch) | 1,518,881 | 28.8 | 1.608 | 2.102 | 0.9950 | 0.311 | 0.144 | 1.112 | 0.517 | 6.06 | 6.21 | 0.0006 |
+| ResNet-18 (ImageNet, frozen backbone) | 11,177,025 | 888.3 | 3.861 | 4.965 | 0.9722 | 0.056 | 0.026 | 0.173 | 0.080 | 4.82 | 44.79 | 0.0018 |
 
 "Project" = every run of that model family in `logs/runs.csv` (LR scans,
 discarded configurations, ablations, seed repeats, final run, test
-evaluation, inference benchmark). All own-CNN runs (23) are counted once, in
+evaluation, inference benchmark, external test). All own-CNN runs (26) are counted once, in
 the final row.
 
 **Choosing the final own model.** After the ablations, two combined "green"
@@ -214,8 +214,8 @@ must reach ≤ 1.15 × 1.499 = 1.724 and ≤ 0.6 × 25.833 = 15.50.
 - Footprint: the final model's training run uses 9× less energy than the
   reference and 10–28× less than the standard models, and its inference uses
   the least energy per 1,000 predictions. Over the **whole project**, however,
-  the own-CNN family (1.99 Wh, mostly ablations and seed repeats) costs more
-  than MobileNetV3-S FT (1.01 Wh), which had no ablations.
+  the own-CNN family (2.03 Wh, mostly ablations and seed repeats) costs more
+  than MobileNetV3-S FT (1.03 Wh), which had no ablations.
 
 ![error vs CO2](results/error_vs_co2.png)
 
@@ -239,4 +239,75 @@ python -m src.ablation        # -> results/ablation.{csv,md}
 difference in units of the seed standard deviation (0.067), so |Δ| below ~2
 SDs is within seed noise. ΔWh is the change in final-training energy.
 
-To be filled in: external real-microscopy test.
+### External test on real microscopy (test only)
+
+```bash
+python -m src.external_eval   # -> results/external/{calibration.json, table.md, summary.csv, <run>.json, <run>_predictions.csv}
+```
+
+Every rule was fixed before any prediction on these images was looked at, and
+nothing is tuned on them (protocol in the docstring of `src/external_eval.py`):
+
+- **Intensity:** per image, the 1st / 99.5th percentiles are mapped linearly to
+  the BBBC005 train medians of the same percentiles (0 / 178–180), then clipped
+  and rounded to uint8 as in training.
+- **Nucleus size:** label-free estimate, identical for every set: Otsu threshold,
+  components ≥ 20 px, median area (BBBC005 3,513 px; BBBC039 628 px, against
+  633 px from the masks, so the estimate is validated; BBBC002 262 px; BBBC001 91 px).
+- **Protocols:**
+  - `naive`: whole image resized to the training input size.
+  - `matched`: whole image resized so nuclei have the BBBC005 size at the model
+    input (BBBC039 96×128 for the 48×64 model; BBBC002 176²; BBBC001 296²).
+  - `tiles` (BBBC039 only): the matched image split into 2×2 tiles of exactly the
+    training size. Tile truth = mask nuclei whose centroid lies in the tile;
+    image prediction = sum of the tile predictions. Snapping to whole tiles makes
+    the nuclei 15 % smaller than the BBBC005 size.
+- Energy: one measured run for preparation (`ext_prep`, shared) and one per model
+  (`ext_<run>`, counted in that model's project footprint).
+
+Image-level relative MAE (MAE / mean true count; lower is better; best per column in bold):
+
+| Model | BBBC039/naive | BBBC039/matched | BBBC039/tiles | BBBC002/naive | BBBC002/matched | BBBC001/naive | BBBC001/matched |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| *mean true count* | *118* | *118* | *118* | *69* | *69* | *360* | *360* |
+| Own CNN final (48x64, sum) | 0.677 | **0.183** | **0.165** | 0.704 | **0.597** | 0.916 | **0.034** |
+| Own CNN reference (96x128, sum) | 0.680 | 0.214 | 0.194 | 0.717 | 0.689 | 0.898 | 0.211 |
+| Own CNN reference, avg pool | 0.681 | 0.804 | 0.208 | 0.705 | 0.804 | **0.877** | 0.956 |
+| MobileNetV3-S FT | 0.715 | 0.829 | 0.307 | 0.753 | 0.832 | 0.930 | 0.953 |
+| ResNet-18 FT | **0.645** | 0.716 | 0.192 | **0.668** | 0.708 | 0.897 | 0.885 |
+| MobileNetV3-S scratch | 0.840 | 0.984 | 0.421 | 0.832 | 0.944 | 0.959 | 0.984 |
+| ResNet-18 frozen | 0.650 | 0.714 | 0.170 | 0.755 | 0.726 | 0.928 | 0.900 |
+
+Signed bias (cells, + = over-count):
+
+| Model | BBBC039/naive | BBBC039/matched | BBBC039/tiles | BBBC002/naive | BBBC002/matched | BBBC001/naive | BBBC001/matched |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Own CNN final (48x64, sum) | -75.4 | -4.4 | +0.1 | -48.5 | +41.2 | -330.0 | +3.6 |
+| Own CNN reference (96x128, sum) | -75.5 | -8.1 | -4.1 | -49.4 | +47.5 | -323.5 | +75.9 |
+| Own CNN reference, avg pool | -75.4 | -90.3 | -4.1 | -48.6 | -55.4 | -316.0 | -344.3 |
+| MobileNetV3-S FT | -80.7 | -94.7 | -22.9 | -51.9 | -57.3 | -334.9 | -343.4 |
+| ResNet-18 FT | -72.1 | -80.4 | -7.8 | -46.0 | -32.5 | -323.0 | -318.8 |
+| MobileNetV3-S scratch | -94.6 | -110.9 | -33.5 | -57.3 | -65.1 | -345.3 | -354.6 |
+| ResNet-18 frozen | -75.9 | -83.8 | -16.5 | -49.5 | -49.7 | -334.2 | -324.1 |
+
+BBBC039 tile-level MAE (tile counts 0–79): own final 5.80, ResNet-18 FT 6.02,
+ResNet-18 frozen 6.10, own reference 6.24, own avg-pool 6.66, MobileNetV3-S FT 9.07,
+MobileNetV3-S scratch 12.48.
+
+Findings:
+- **Naive resizing fails for every model** (rel. MAE 0.65–0.96, large under-count):
+  nuclei shrink to ~2–3 px and dense images exceed the training count range.
+- **Sum pooling is what makes larger inputs work** (controlled test: the "avg
+  pool" row is the own reference with only the pooling head changed). On matched
+  full images the sum-pooling models count far beyond the training range
+  (BBBC039 mean 118, BBBC001 mean 360; training max 100). All global-average
+  models, own or standard, predict about the same count whatever the image
+  size, so their error grows with the true count. This supports the design
+  hypothesis that BBBC005 alone could not test (there, average pooling was as good).
+- **With tiles, which keep the input in-distribution, all models improve.** The
+  gap closes: the own final model is best (0.165, bias +0.1), and the frozen
+  ResNet-18 and ResNet-18 FT are close behind. MobileNetV3 transfers worst.
+- **BBBC002 (Drosophila) fails for everyone** (≥ 0.60). The sum models over-count
+  and the others under-count; human counters disagree by 20 % on this set.
+- Caveats: BBBC001 has only 6 images; the comparison is single-seed; the own
+  final model's lead over the reference on real data should not be over-read.

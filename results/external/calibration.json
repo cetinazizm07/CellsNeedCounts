@@ -1,0 +1,58 @@
+{
+  "bbbc005": {
+    "median_area_px": 3513.0,
+    "n_images": 200,
+    "96x128": {
+      "p_lo": 0.0,
+      "p_hi": 180.0
+    },
+    "48x64": {
+      "p_lo": 0.0,
+      "p_hi": 178.0
+    }
+  },
+  "BBBC039": {
+    "median_area_px": 628.0,
+    "n_images": 200,
+    "orig_hw": [
+      520,
+      696
+    ],
+    "mask_median_area_px": 632.5,
+    "diameter_ratio_to_bbbc005": 0.4228056157037793,
+    "tiles_k_96x128": 2,
+    "matched_size_96x128": [
+      192,
+      256
+    ],
+    "scale_error_96x128": -0.15438876859244144
+  },
+  "BBBC002": {
+    "median_area_px": 262.0,
+    "n_images": 50,
+    "orig_hw": [
+      512,
+      512
+    ],
+    "diameter_ratio_to_bbbc005": 0.273093630358188,
+    "matched_size_96x128": [
+      344,
+      344
+    ],
+    "scale_error_96x128": -0.0061240926417505115
+  },
+  "BBBC001": {
+    "median_area_px": 91.0,
+    "n_images": 6,
+    "orig_hw": [
+      512,
+      512
+    ],
+    "diameter_ratio_to_bbbc005": 0.1609465313013759,
+    "matched_size_96x128": [
+      584,
+      584
+    ],
+    "scale_error_96x128": -0.005610298144493875
+  }
+}

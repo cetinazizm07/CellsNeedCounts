@@ -23,14 +23,14 @@ OUT = ROOT / "results"
 # configuration whose runs are already counted in another row's family)
 FINAL_OWN = "own_green_48x64"
 MODELS = [
-    ("Own CNN final (8-16-32, no c5, fp16, 48x64)", FINAL_OWN, r"^(?:search_)?own_|^(?:eval|infer)_own_"),
+    ("Own CNN final (8-16-32, no c5, fp16, 48x64)", FINAL_OWN, r"^(?:search_)?own_|^(?:eval|infer|ext)_own_"),
     ("Own CNN reference (16-32-64, 96x128)", "own_e15", None),
-    ("MobileNetV3-S (ImageNet FT)", "mnv3s_ft_e15", r"^(?:search_)?mnv3s_ft|^(?:eval|infer)_mnv3s_ft"),
-    ("ResNet-18 (ImageNet FT)", "resnet18_ft_e15", r"^(?:search_)?resnet18_ft|^(?:eval|infer)_resnet18_ft"),
-    ("MobileNetV3-S (scratch)", "mnv3s_scratch_e15", r"^(?:search_)?mnv3s_scratch|^(?:eval|infer)_mnv3s_scratch"),
-    ("ResNet-18 (ImageNet, frozen backbone)", "resnet18_probe_e15", r"^resnet18_probe|^(?:eval|infer)_resnet18_probe"),
+    ("MobileNetV3-S (ImageNet FT)", "mnv3s_ft_e15", r"^(?:search_)?mnv3s_ft|^(?:eval|infer|ext)_mnv3s_ft"),
+    ("ResNet-18 (ImageNet FT)", "resnet18_ft_e15", r"^(?:search_)?resnet18_ft|^(?:eval|infer|ext)_resnet18_ft"),
+    ("MobileNetV3-S (scratch)", "mnv3s_scratch_e15", r"^(?:search_)?mnv3s_scratch|^(?:eval|infer|ext)_mnv3s_scratch"),
+    ("ResNet-18 (ImageNet, frozen backbone)", "resnet18_probe_e15", r"^resnet18_probe|^(?:eval|infer|ext)_resnet18_probe"),
 ]
-SHARED = r"^(?:data_prep|baseline_)"
+SHARED = r"^(?:data_prep|baseline_|ext_prep)"
 
 
 def family(regex):

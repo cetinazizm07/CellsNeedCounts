@@ -6,8 +6,8 @@
   "own_acceptable": true,
   "own_margin_to_threshold": 0.02053952965264516,
   "own_reference_acceptable": true,
-  "shared_kwh": 4.787937281666667e-05,
-  "project_total_kwh": 0.005895313689791667,
-  "project_total_kg_co2eq": 0.002738880205885551,
-  "n_runs_total": 56
+  "shared_kwh": 0.00014657316347777778,
+  "project_total_kwh": 0.006287574881661111,
+  "project_total_kg_co2eq": 0.0029211192639714088,
+  "n_runs_total": 66
 }
