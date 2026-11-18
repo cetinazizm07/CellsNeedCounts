@@ -127,6 +127,31 @@ synthetic ones, and most real images hold more than 100 nuclei. Images must be
 rescaled so nuclei have the training size (~11 px at the model input), and
 counts above 100 test extrapolation.
 
+## Own model weights
+
+| File | Model | Input | Params | Size | Test MAE | SHA-256 |
+|---|---|---|---:|---:|---:|---|
+| `weights/own_green_48x64.pt` | **final** own CNN (8-16-32, no c5, sum pooling, trained with fp16 autocast) | 48×64 | 15,257 | 72 KB | 1.704 | `217776f7…aee7` |
+| `weights/own_e15.pt` | reference own CNN (16-32-64, c5, sum pooling, fp32) | 96×128 | 97,457 | 403 KB | 1.458 | `7ff2f59b…1329` |
+
+Each file is the training checkpoint unchanged (`checkpoints/<run>.pt`, best
+validation epoch): `model` (state dict, including the train pixel mean/std
+buffers), `args` (training arguments) and `kw` (constructor arguments).
+Inference runs in fp32. Input: gray image scaled to [0, 1], shape N×1×H×W;
+the fully convolutional model also accepts larger inputs (see external test).
+
+```python
+import torch
+from src.models import build_model
+
+ck = torch.load("weights/own_green_48x64.pt", map_location="cpu", weights_only=False)
+hw = tuple(int(v) for v in ck["args"]["size"].split("x"))
+model = build_model("own", hw, **ck["kw"])
+model.load_state_dict(ck["model"])
+model.eval()
+count = model(images_01)  # N x 1 x 48 x 64 in [0, 1] -> N predicted counts
+```
+
 ## Reproducing results
 
 ```bash
